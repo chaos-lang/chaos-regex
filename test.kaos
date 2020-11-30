@@ -5,4 +5,6 @@ print regex.is_match("hell.*", "hel")
 print regex.replace("x", "xoxoxox", "Y")
 print regex.replace_all("x", "xoxoxox", "Y")
 print regex.replacen("x", "xoxoxox", 3, "Y")
+print regex.split(" ", "hello my name is Steve")
+print regex.splitn(" ", "hello my name is Steve", 3)
 

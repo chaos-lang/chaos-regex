@@ -10,7 +10,7 @@ default:
 	export CHAOS_COMPILER=clang
 	${MAKE} build
 
-build:
+build: regex.c src/lib.rs
 	cargo build --release
 	cp target/release/libchaos_regex.a .
 ifeq ($(UNAME_S), Darwin)
@@ -19,10 +19,10 @@ else
 	${MAKE} build-linux
 endif
 
-build-linux:
+build-linux: libchaos_regex.a
 	${CHAOS_COMPILER} -shared -fPIC -pthread ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.so
 
-build-macos:
+build-macos: libchaos_regex.a
 	${CHAOS_COMPILER} -shared -fPIC -pthread -undefined dynamic_lookup ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.dylib
 
 spell:

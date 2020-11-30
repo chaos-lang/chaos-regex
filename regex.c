@@ -1,5 +1,7 @@
 #include "Chaos.h"
 #include "bindings.h"
+#include <stdint.h>
+#include <stdio.h>
 
 char *hello_params_name[] = {};
 unsigned hello_params_type[] = {};
@@ -74,6 +76,47 @@ int KAOS_EXPORT Kaos_replacen() {
   return 0;
 }
 
+char *split_params_name[] = {"re", "text", "cache"};
+unsigned split_params_type[] = {K_STRING, K_STRING, K_BOOL};
+unsigned split_params_secondary_type[] = {K_ANY, K_ANY, K_ANY};
+unsigned short split_params_length =
+    (unsigned short)sizeof(split_params_type) / sizeof(unsigned);
+KaosValue split_opt_params[1];
+int KAOS_EXPORT Kaos_split() {
+  char *re = kaos.getVariableString(split_params_name[0]);
+  char *text = kaos.getVariableString(split_params_name[1]);
+  char **ret = NULL;
+  uintptr_t len = split(re, text, split_opt_params[0].b, &ret);
+  kaos.startBuildingList();
+  for (uintptr_t i = 0; i < len; i++) {
+    kaos.createVariableString(NULL, ret[i]);
+  }
+  kaos.returnList(K_STRING);
+  free_str_list(ret, len);
+  return 0;
+}
+
+char *splitn_params_name[] = {"re", "text", "limit", "cache"};
+unsigned splitn_params_type[] = {K_STRING, K_STRING, K_NUMBER, K_BOOL};
+unsigned splitn_params_secondary_type[] = {K_ANY, K_ANY, K_ANY, K_ANY};
+unsigned short splitn_params_length =
+    (unsigned short)sizeof(splitn_params_type) / sizeof(unsigned);
+KaosValue splitn_opt_params[1];
+int KAOS_EXPORT Kaos_splitn() {
+  char *re = kaos.getVariableString(splitn_params_name[0]);
+  char *text = kaos.getVariableString(splitn_params_name[1]);
+  long long limit = kaos.getVariableInt(splitn_params_name[2]);
+  char **ret = NULL;
+  uintptr_t len = splitn(re, text, limit, splitn_opt_params[0].b, &ret);
+  kaos.startBuildingList();
+  for (uintptr_t i = 0; i < len; i++) {
+    kaos.createVariableString(NULL, ret[i]);
+  }
+  kaos.returnList(K_STRING);
+  free_str_list(ret, len);
+  return 0;
+}
+
 int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
   kaos = _kaos;
   kaos.defineFunction("hello", K_VOID, K_ANY, hello_params_name,
@@ -100,5 +143,15 @@ int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
   kaos.defineFunction("replacen", K_STRING, K_ANY, replacen_params_name,
                       replacen_params_type, replacen_params_secondary_type,
                       replacen_params_length, replacen_opt_params, 1);
+
+  split_opt_params[0].b = true;
+  kaos.defineFunction("split", K_STRING, K_ANY, split_params_name,
+                      split_params_type, split_params_secondary_type,
+                      split_params_length, split_opt_params, 1);
+
+  splitn_opt_params[0].b = true;
+  kaos.defineFunction("splitn", K_STRING, K_ANY, splitn_params_name,
+                      splitn_params_type, splitn_params_secondary_type,
+                      splitn_params_length, splitn_opt_params, 1);
   return 0;
 }
