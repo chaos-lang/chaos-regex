@@ -22,7 +22,5 @@ spells/
 # Chaos build directory
 build
 
-
-# Added by cargo
-
 /target
+bindings.h
