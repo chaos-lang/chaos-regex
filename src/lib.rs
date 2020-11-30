@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::mem;
 use std::thread_local;
 use std::{
     ffi::{CStr, CString},
@@ -9,6 +10,11 @@ use std::{
 
 thread_local! {
     static CACHE: RefCell<HashMap<String, Regex>> = RefCell::new(HashMap::new());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free_str(s: *mut c_char) {
+    mem::drop(CString::from_raw(s))
 }
 
 #[no_mangle]

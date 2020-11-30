@@ -34,7 +34,9 @@ int KAOS_EXPORT Kaos_replace() {
   char *re = kaos.getVariableString(replace_params_name[0]);
   char *text = kaos.getVariableString(replace_params_name[1]);
   char *rep = kaos.getVariableString(replace_params_name[2]);
-  kaos.returnVariableString(replace(re, text, rep, replace_opt_params[0].b));
+  char *ret = replace(re, text, rep, replace_opt_params[0].b);
+  kaos.returnVariableString(ret);
+  free_str(ret);
   return 0;
 }
 
@@ -48,8 +50,9 @@ int KAOS_EXPORT Kaos_replace_all() {
   char *re = kaos.getVariableString(replace_all_params_name[0]);
   char *text = kaos.getVariableString(replace_all_params_name[1]);
   char *rep = kaos.getVariableString(replace_all_params_name[2]);
-  kaos.returnVariableString(
-      replace_all(re, text, rep, replace_all_opt_params[0].b));
+  char *ret = replace_all(re, text, rep, replace_all_opt_params[0].b);
+  kaos.returnVariableString(ret);
+  free_str(ret);
   return 0;
 }
 
@@ -65,8 +68,9 @@ int KAOS_EXPORT Kaos_replacen() {
   char *text = kaos.getVariableString(replacen_params_name[1]);
   long long limit = kaos.getVariableInt(replacen_params_name[2]);
   char *rep = kaos.getVariableString(replacen_params_name[3]);
-  kaos.returnVariableString(
-      replacen(re, text, limit, rep, replacen_opt_params[0].b));
+  char *ret = replacen(re, text, limit, rep, replacen_opt_params[0].b);
+  kaos.returnVariableString(ret);
+  free_str(ret);
   return 0;
 }
 
