@@ -2,4 +2,7 @@ import regex
 
 regex.hello()
 print regex.is_match("hell.*", "hel")
+print regex.replace("x", "xoxoxox", "Y")
+print regex.replace_all("x", "xoxoxox", "Y")
+print regex.replacen("x", "xoxoxox", 3, "Y")
 
