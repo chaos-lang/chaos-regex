@@ -117,6 +117,53 @@ int KAOS_EXPORT Kaos_splitn() {
   return 0;
 }
 
+char *find_params_name[] = {"re", "text", "cache"};
+unsigned find_params_type[] = {K_STRING, K_STRING, K_BOOL};
+unsigned find_params_secondary_type[] = {K_ANY, K_ANY, K_ANY};
+unsigned short find_params_length =
+    (unsigned short)sizeof(find_params_type) / sizeof(unsigned);
+KaosValue find_opt_params[1];
+int KAOS_EXPORT Kaos_find() {
+  char *re = kaos.getVariableString(find_params_name[0]);
+  char *text = kaos.getVariableString(find_params_name[1]);
+  Match *ret = find(re, text, find_opt_params[0].b);
+  kaos.startBuildingList();
+  if (ret != NULL) {
+    kaos.startBuildingDict();
+    kaos.createVariableInt("start", ret->start);
+    kaos.createVariableInt("end", ret->end);
+    kaos.createVariableString("string", ret->string);
+    kaos.finishDict(K_ANY);
+  }
+  kaos.returnList(K_DICT);
+  free_match_prt(ret);
+  return 0;
+}
+
+char *find_all_params_name[] = {"re", "text", "cache"};
+unsigned find_all_params_type[] = {K_STRING, K_STRING, K_BOOL};
+unsigned find_all_params_secondary_type[] = {K_ANY, K_ANY, K_ANY};
+unsigned short find_all_params_length =
+    (unsigned short)sizeof(find_all_params_type) / sizeof(unsigned);
+KaosValue find_all_opt_params[1];
+int KAOS_EXPORT Kaos_find_all() {
+  char *re = kaos.getVariableString(find_all_params_name[0]);
+  char *text = kaos.getVariableString(find_all_params_name[1]);
+  Match *ret = NULL;
+  uintptr_t len = find_all(re, text, find_all_opt_params[0].b, &ret);
+  kaos.startBuildingList();
+  for (uintptr_t i = 0; i < len; i++) {
+    kaos.startBuildingDict();
+    kaos.createVariableInt("start", ret[i].start);
+    kaos.createVariableInt("end", ret[i].end);
+    kaos.createVariableString("string", ret[i].string);
+    kaos.finishDict(K_ANY);
+  }
+  kaos.returnList(K_DICT);
+  free_match_list(ret, len);
+  return 0;
+}
+
 int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
   kaos = _kaos;
   kaos.defineFunction("hello", K_VOID, K_ANY, hello_params_name,
@@ -153,5 +200,16 @@ int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
   kaos.defineFunction("splitn", K_STRING, K_ANY, splitn_params_name,
                       splitn_params_type, splitn_params_secondary_type,
                       splitn_params_length, splitn_opt_params, 1);
+
+  find_opt_params[0].b = true;
+  kaos.defineFunction("find", K_STRING, K_ANY, find_params_name,
+                      find_params_type, find_params_secondary_type,
+                      find_params_length, find_opt_params, 1);
+
+  find_all_opt_params[0].b = true;
+  kaos.defineFunction("find_all", K_STRING, K_ANY, find_all_params_name,
+                      find_all_params_type, find_all_params_secondary_type,
+                      find_all_params_length, find_all_opt_params, 1);
+
   return 0;
 }

@@ -1,8 +1,8 @@
 use regex::Regex;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::mem::{self, ManuallyDrop};
 use std::thread_local;
+use std::{cell::RefCell, ptr};
 use std::{
     ffi::{CStr, CString},
     os::raw::c_char,
@@ -162,7 +162,10 @@ pub unsafe extern "C" fn splitn(
             reg.splitn(text, limit as usize).collect()
         })
     } else {
-        Regex::new(re).unwrap().splitn(text, limit as usize).collect()
+        Regex::new(re)
+            .unwrap()
+            .splitn(text, limit as usize)
+            .collect()
     };
     let mut ret = ManuallyDrop::new(Vec::with_capacity(splits.len()));
     for item in splits {
@@ -170,4 +173,81 @@ pub unsafe extern "C" fn splitn(
     }
     *list = ret.as_ptr() as *mut _;
     ret.len()
+}
+
+#[repr(C)]
+pub struct Match {
+    pub start: i64,
+    pub end: i64,
+    pub string: *mut c_char,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn find(re: *mut c_char, text: *mut c_char, cache: bool) -> *mut Match {
+    let re = CStr::from_ptr(re).to_str().unwrap();
+    let text = CStr::from_ptr(text).to_str().unwrap();
+    let matches = if cache {
+        CACHE.with(|cache| {
+            let mut cache = cache.borrow_mut();
+            let reg = cache
+                .entry(re.to_owned())
+                .or_insert(Regex::new(re).unwrap());
+            reg.find(text)
+        })
+    } else {
+        Regex::new(re).unwrap().find(text)
+    };
+    if let Some(mat) = matches {
+        let mat = Match {
+            start: mat.start() as i64,
+            end: mat.end() as i64,
+            string: CString::new(mat.as_str()).unwrap().into_raw(),
+        };
+        Box::into_raw(Box::new(mat))
+    } else {
+        ptr::null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn find_all(
+    re: *mut c_char,
+    text: *mut c_char,
+    cache: bool,
+    list: *mut *mut Match,
+) -> usize {
+    let re = CStr::from_ptr(re).to_str().unwrap();
+    let text = CStr::from_ptr(text).to_str().unwrap();
+    let matches: Vec<_> = if cache {
+        CACHE.with(|cache| {
+            let mut cache = cache.borrow_mut();
+            let reg = cache
+                .entry(re.to_owned())
+                .or_insert(Regex::new(re).unwrap());
+            reg.find_iter(text).collect()
+        })
+    } else {
+        Regex::new(re).unwrap().find_iter(text).collect()
+    };
+    let mut ret = ManuallyDrop::new(Vec::with_capacity(matches.len()));
+    for mat in matches {
+        let mat = Match {
+            start: mat.start() as i64,
+            end: mat.end() as i64,
+            string: CString::new(mat.as_str()).unwrap().into_raw(),
+        };
+        ret.push(mat);
+    }
+    *list = ret.as_ptr() as *mut _;
+    ret.len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free_match_prt(ptr: *mut Match) {
+    mem::drop(Box::from_raw(ptr))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free_match_list(ptr: *mut Match, len: usize) {
+    mem::drop(Vec::from_raw_parts(ptr, len, len));
 }
