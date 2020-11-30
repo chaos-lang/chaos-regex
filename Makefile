@@ -4,17 +4,15 @@ SHELL=/bin/bash
 
 UNAME_S := $(shell uname -s)
 
-export SPELL_NAME=template
+export SPELL_NAME=regex
 
 default:
-	export CHAOS_COMPILER=gcc
-	${MAKE} build
-
-clang:
 	export CHAOS_COMPILER=clang
 	${MAKE} build
 
 build:
+	cargo build --release
+	cp target/release/libchaos_regex.a .
 ifeq ($(UNAME_S), Darwin)
 	${MAKE} build-macos
 else
@@ -22,10 +20,10 @@ else
 endif
 
 build-linux:
-	${CHAOS_COMPILER} -shared -fPIC ${SPELL_NAME}.c -o ${SPELL_NAME}.so
+	${CHAOS_COMPILER} -shared -fPIC -pthread ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.so
 
 build-macos:
-	${CHAOS_COMPILER} -shared -fPIC -undefined dynamic_lookup ${SPELL_NAME}.c -o ${SPELL_NAME}.dylib
+	${CHAOS_COMPILER} -shared -fPIC -pthread -undefined dynamic_lookup ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.dylib
 
 spell:
 	mkdir -p spells/${SPELL_NAME}
