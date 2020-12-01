@@ -48,3 +48,9 @@ requirements:
 	cd .chaos/ && \
 	make requirements && \
 	rm -rf .chaos/
+
+clean:
+	rm -rf libchaos_regex.a regex.o regex.so bindings.h build
+
+clean-all: clean
+	cargo clean
