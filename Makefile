@@ -7,6 +7,10 @@ UNAME_S := $(shell uname -s)
 export SPELL_NAME=regex
 
 default:
+	export CHAOS_COMPILER=gcc
+	${MAKE} build
+
+clang:
 	export CHAOS_COMPILER=clang
 	${MAKE} build
 
