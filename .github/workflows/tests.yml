@@ -16,7 +16,7 @@ jobs:
         target:
           - ubuntu
           - debian
-          - centos
+          # - centos
           - fedora
           - archlinux
           - alpine
@@ -26,8 +26,8 @@ jobs:
             image: ubuntu:latest
           - target: debian
             image: debian:latest
-          - target: centos
-            image: centos:latest
+          # - target: centos
+          #   image: centos:latest
           - target: fedora
             image: fedora:latest
           - target: archlinux
