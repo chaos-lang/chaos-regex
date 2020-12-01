@@ -3,14 +3,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-char *hello_params_name[] = {};
-unsigned hello_params_type[] = {};
-unsigned hello_params_secondary_type[] = {};
-unsigned short hello_params_length = 0;
-int KAOS_EXPORT Kaos_hello() {
-  fprintf(stdout, "Hello from the template!\n");
-  fflush(stdout);
-  return 0;
+void throw_err() {
+  int err_len = last_error_length();
+  char *err_str = malloc(err_len);
+  last_error_message(err_str, err_len);
+  kaos.raiseError(err_str);
+  free(err_str);
 }
 
 char *is_match_params_name[] = {"re", "text", "cache"};
@@ -22,7 +20,12 @@ KaosValue is_match_opt_params[1];
 int KAOS_EXPORT Kaos_is_match() {
   char *re = kaos.getVariableString(is_match_params_name[0]);
   char *text = kaos.getVariableString(is_match_params_name[1]);
-  kaos.returnVariableBool(is_match(re, text, is_match_opt_params[0].b));
+  bool ret = is_match(re, text, is_match_opt_params[0].b);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
+  kaos.returnVariableBool(ret);
   return 0;
 }
 
@@ -37,6 +40,10 @@ int KAOS_EXPORT Kaos_replace() {
   char *text = kaos.getVariableString(replace_params_name[1]);
   char *rep = kaos.getVariableString(replace_params_name[2]);
   char *ret = replace(re, text, rep, replace_opt_params[0].b);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.returnVariableString(ret);
   free_str(ret);
   return 0;
@@ -53,6 +60,10 @@ int KAOS_EXPORT Kaos_replace_all() {
   char *text = kaos.getVariableString(replace_all_params_name[1]);
   char *rep = kaos.getVariableString(replace_all_params_name[2]);
   char *ret = replace_all(re, text, rep, replace_all_opt_params[0].b);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.returnVariableString(ret);
   free_str(ret);
   return 0;
@@ -71,6 +82,10 @@ int KAOS_EXPORT Kaos_replacen() {
   long long limit = kaos.getVariableInt(replacen_params_name[2]);
   char *rep = kaos.getVariableString(replacen_params_name[3]);
   char *ret = replacen(re, text, limit, rep, replacen_opt_params[0].b);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.returnVariableString(ret);
   free_str(ret);
   return 0;
@@ -87,6 +102,10 @@ int KAOS_EXPORT Kaos_split() {
   char *text = kaos.getVariableString(split_params_name[1]);
   char **ret = NULL;
   uintptr_t len = split(re, text, split_opt_params[0].b, &ret);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.startBuildingList();
   for (uintptr_t i = 0; i < len; i++) {
     kaos.createVariableString(NULL, ret[i]);
@@ -108,6 +127,10 @@ int KAOS_EXPORT Kaos_splitn() {
   long long limit = kaos.getVariableInt(splitn_params_name[2]);
   char **ret = NULL;
   uintptr_t len = splitn(re, text, limit, splitn_opt_params[0].b, &ret);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.startBuildingList();
   for (uintptr_t i = 0; i < len; i++) {
     kaos.createVariableString(NULL, ret[i]);
@@ -127,6 +150,10 @@ int KAOS_EXPORT Kaos_find() {
   char *re = kaos.getVariableString(find_params_name[0]);
   char *text = kaos.getVariableString(find_params_name[1]);
   Match *ret = find(re, text, find_opt_params[0].b);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.startBuildingList();
   if (ret != NULL) {
     kaos.startBuildingDict();
@@ -151,6 +178,10 @@ int KAOS_EXPORT Kaos_find_all() {
   char *text = kaos.getVariableString(find_all_params_name[1]);
   Match *ret = NULL;
   uintptr_t len = find_all(re, text, find_all_opt_params[0].b, &ret);
+  if (have_last_error()) {
+    throw_err();
+    return 1;
+  }
   kaos.startBuildingList();
   for (uintptr_t i = 0; i < len; i++) {
     kaos.startBuildingDict();
@@ -193,9 +224,6 @@ int KAOS_EXPORT Kaos_find_all() {
 
 int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
   kaos = _kaos;
-  kaos.defineFunction("hello", K_VOID, K_ANY, hello_params_name,
-                      hello_params_type, hello_params_secondary_type,
-                      hello_params_length, NULL, 0);
 
   is_match_opt_params[0].b = true;
   kaos.defineFunction("is_match", K_BOOL, K_ANY, is_match_params_name,
@@ -240,7 +268,8 @@ int KAOS_EXPORT KaosRegister(struct Kaos _kaos) {
 
   /* captures_opt_params[0].b = true; */
   /* kaos.defineFunction("captures", K_STRING, K_ANY, captures_params_name, */
-  /*                     captures_params_type, captures_params_secondary_type, */
+  /*                     captures_params_type, captures_params_secondary_type,
+   */
   /*                     captures_params_length, captures_opt_params, 1); */
 
   return 0;

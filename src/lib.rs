@@ -1,3 +1,6 @@
+mod error;
+
+use error_gen::c_error;
 use regex::Regex;
 use std::collections::HashMap;
 use std::mem::{self, ManuallyDrop};
@@ -26,71 +29,71 @@ pub unsafe extern "C" fn free_str_list(ptr: *mut *mut c_char, len: usize) {
 }
 
 #[no_mangle]
+#[c_error(false)]
 pub unsafe extern "C" fn is_match(re: *mut c_char, text: *mut c_char, cache: bool) -> bool {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     if cache {
         CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.is_match(text)
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.is_match(text))
         })
     } else {
-        Regex::new(re).unwrap().is_match(text)
+        Ok(Regex::new(re)?.is_match(text))
     }
 }
 
 #[no_mangle]
+#[c_error(ptr::null_mut())]
 pub unsafe extern "C" fn replace(
     re: *mut c_char,
     text: *mut c_char,
     rep: *mut c_char,
     cache: bool,
 ) -> *mut c_char {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
-    let rep = CStr::from_ptr(rep).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
+    let rep = CStr::from_ptr(rep).to_str()?;
     let ret = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.replace(text, rep)
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.replace(text, rep))
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().replace(text, rep)
+        Regex::new(re)?.replace(text, rep)
     };
-    CString::new(ret.as_bytes()).unwrap().into_raw()
+    Ok(CString::new(ret.as_bytes())?.into_raw())
 }
 
 #[no_mangle]
+#[c_error(ptr::null_mut())]
 pub unsafe extern "C" fn replace_all(
     re: *mut c_char,
     text: *mut c_char,
     rep: *mut c_char,
     cache: bool,
 ) -> *mut c_char {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
-    let rep = CStr::from_ptr(rep).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
+    let rep = CStr::from_ptr(rep).to_str()?;
     let ret = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.replace_all(text, rep)
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.replace_all(text, rep))
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().replace_all(text, rep)
+        Regex::new(re)?.replace_all(text, rep)
     };
-    CString::new(ret.as_bytes()).unwrap().into_raw()
+    Ok(CString::new(ret.as_bytes())?.into_raw())
 }
 
 #[no_mangle]
+#[c_error(ptr::null_mut())]
 pub unsafe extern "C" fn replacen(
     re: *mut c_char,
     text: *mut c_char,
@@ -98,52 +101,52 @@ pub unsafe extern "C" fn replacen(
     rep: *mut c_char,
     cache: bool,
 ) -> *mut c_char {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
-    let rep = CStr::from_ptr(rep).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
+    let rep = CStr::from_ptr(rep).to_str()?;
     let ret = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.replacen(text, limit as usize, rep)
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.replacen(text, limit as usize, rep))
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().replacen(text, limit as usize, rep)
+        Regex::new(re)?.replacen(text, limit as usize, rep)
     };
-    CString::new(ret.as_bytes()).unwrap().into_raw()
+    Ok(CString::new(ret.as_bytes())?.into_raw())
 }
 
 #[no_mangle]
+#[c_error(0)]
 pub unsafe extern "C" fn split(
     re: *mut c_char,
     text: *mut c_char,
     cache: bool,
     list: *mut *mut *mut c_char,
 ) -> usize {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     let splits: Vec<_> = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.split(text).collect()
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.split(text).collect())
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().split(text).collect()
+        Regex::new(re)?.split(text).collect()
     };
     let mut ret = ManuallyDrop::new(Vec::with_capacity(splits.len()));
     for item in splits {
-        ret.push(CString::new(item).unwrap().into_raw());
+        ret.push(CString::new(item)?.into_raw());
     }
     *list = ret.as_ptr() as *mut _;
-    ret.len()
+    Ok(ret.len())
 }
 
 #[no_mangle]
+#[c_error(0)]
 pub unsafe extern "C" fn splitn(
     re: *mut c_char,
     text: *mut c_char,
@@ -151,28 +154,24 @@ pub unsafe extern "C" fn splitn(
     cache: bool,
     list: *mut *mut *mut c_char,
 ) -> usize {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     let splits: Vec<_> = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.splitn(text, limit as usize).collect()
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.splitn(text, limit as usize).collect())
+        });
+        ret?
     } else {
-        Regex::new(re)
-            .unwrap()
-            .splitn(text, limit as usize)
-            .collect()
+        Regex::new(re)?.splitn(text, limit as usize).collect()
     };
     let mut ret = ManuallyDrop::new(Vec::with_capacity(splits.len()));
     for item in splits {
-        ret.push(CString::new(item).unwrap().into_raw());
+        ret.push(CString::new(item)?.into_raw());
     }
     *list = ret.as_ptr() as *mut _;
-    ret.len()
+    Ok(ret.len())
 }
 
 #[repr(C)]
@@ -183,63 +182,63 @@ pub struct Match {
 }
 
 #[no_mangle]
+#[c_error(ptr::null_mut())]
 pub unsafe extern "C" fn find(re: *mut c_char, text: *mut c_char, cache: bool) -> *mut Match {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     let matches = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.find(text)
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.find(text))
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().find(text)
+        Regex::new(re)?.find(text)
     };
     if let Some(mat) = matches {
         let mat = Match {
             start: mat.start() as i64,
             end: mat.end() as i64,
-            string: CString::new(mat.as_str()).unwrap().into_raw(),
+            string: CString::new(mat.as_str())?.into_raw(),
         };
-        Box::into_raw(Box::new(mat))
+        Ok(Box::into_raw(Box::new(mat)))
     } else {
-        ptr::null_mut()
+        Ok(ptr::null_mut())
     }
 }
 
 #[no_mangle]
+#[c_error(0)]
 pub unsafe extern "C" fn find_all(
     re: *mut c_char,
     text: *mut c_char,
     cache: bool,
     list: *mut *mut Match,
 ) -> usize {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     let matches: Vec<_> = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.find_iter(text).collect()
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.find_iter(text).collect())
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().find_iter(text).collect()
+        Regex::new(re)?.find_iter(text).collect()
     };
     let mut ret = ManuallyDrop::new(Vec::with_capacity(matches.len()));
     for mat in matches {
         let mat = Match {
             start: mat.start() as i64,
             end: mat.end() as i64,
-            string: CString::new(mat.as_str()).unwrap().into_raw(),
+            string: CString::new(mat.as_str())?.into_raw(),
         };
         ret.push(mat);
     }
     *list = ret.as_ptr() as *mut _;
-    ret.len()
+    Ok(ret.len())
 }
 
 #[no_mangle]
@@ -259,24 +258,24 @@ pub struct MatchIdx {
 }
 
 #[no_mangle]
+#[c_error(0)]
 pub unsafe extern "C" fn captures(
     re: *mut c_char,
     text: *mut c_char,
     cache: bool,
     list: *mut *mut MatchIdx,
 ) -> usize {
-    let re = CStr::from_ptr(re).to_str().unwrap();
-    let text = CStr::from_ptr(text).to_str().unwrap();
+    let re = CStr::from_ptr(re).to_str()?;
+    let text = CStr::from_ptr(text).to_str()?;
     let caps = if cache {
-        CACHE.with(|cache| {
+        let ret: anyhow::Result<_> = CACHE.with(|cache| {
             let mut cache = cache.borrow_mut();
-            let reg = cache
-                .entry(re.to_owned())
-                .or_insert(Regex::new(re).unwrap());
-            reg.captures(text)
-        })
+            let reg = cache.entry(re.to_owned()).or_insert(Regex::new(re)?);
+            Ok(reg.captures(text))
+        });
+        ret?
     } else {
-        Regex::new(re).unwrap().captures(text)
+        Regex::new(re)?.captures(text)
     };
     if let Some(caps) = caps {
         let mut ret = ManuallyDrop::new(Vec::with_capacity(caps.len()));
@@ -285,7 +284,7 @@ pub unsafe extern "C" fn captures(
                 let mat = Match {
                     start: mat.start() as i64,
                     end: mat.end() as i64,
-                    string: CString::new(mat.as_str()).unwrap().into_raw(),
+                    string: CString::new(mat.as_str())?.into_raw(),
                 };
                 ret.push(MatchIdx {
                     mat,
@@ -294,8 +293,8 @@ pub unsafe extern "C" fn captures(
             }
         }
         *list = ret.as_ptr() as *mut _;
-        ret.len()
+        Ok(ret.len())
     } else {
-        0
+        Ok(0)
     }
 }

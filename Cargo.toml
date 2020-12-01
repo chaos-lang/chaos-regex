@@ -10,7 +10,16 @@ edition = "2018"
 crate-type = ["staticlib"]
 
 [dependencies]
+anyhow = "1.0.34"
 regex = "1.4.2"
+
+[dependencies.error-gen]
+path = "./error-gen"
 
 [build-dependencies]
 cbindgen = "0.15.0"
+
+[workspace]
+members = [
+	"error-gen"
+]

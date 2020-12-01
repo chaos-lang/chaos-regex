@@ -1,7 +1,6 @@
 import regex
 
-regex.hello()
-print regex.is_match("hell.*", "hel")
+print regex.is_match("hell.*", "hell0")
 print regex.replace("x", "xoxoxox", "Y")
 print regex.replace_all("x", "xoxoxox", "Y")
 print regex.replacen("x", "xoxoxox", 3, "Y")
@@ -9,5 +8,4 @@ print regex.split(" ", "hello my name is Steve")
 print regex.splitn(" ", "hello my name is Steve", 3)
 print regex.find("\b\w{13}\b", "I categorically deny having triskaidekaphobia.")
 print regex.find_all("\b\w{13}\b", "Retroactively relinquishing remunerations is reprehensible.")
-print regex.captures("", "")
 
