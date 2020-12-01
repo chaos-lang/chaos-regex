@@ -9,4 +9,5 @@ print regex.split(" ", "hello my name is Steve")
 print regex.splitn(" ", "hello my name is Steve", 3)
 print regex.find("\b\w{13}\b", "I categorically deny having triskaidekaphobia.")
 print regex.find_all("\b\w{13}\b", "Retroactively relinquishing remunerations is reprehensible.")
+print regex.captures("", "")
 

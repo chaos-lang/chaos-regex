@@ -251,3 +251,51 @@ pub unsafe extern "C" fn free_match_prt(ptr: *mut Match) {
 pub unsafe extern "C" fn free_match_list(ptr: *mut Match, len: usize) {
     mem::drop(Vec::from_raw_parts(ptr, len, len));
 }
+
+#[repr(C)]
+pub struct MatchIdx {
+    pub idx: i64,
+    pub mat: Match,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn captures(
+    re: *mut c_char,
+    text: *mut c_char,
+    cache: bool,
+    list: *mut *mut MatchIdx,
+) -> usize {
+    let re = CStr::from_ptr(re).to_str().unwrap();
+    let text = CStr::from_ptr(text).to_str().unwrap();
+    let caps = if cache {
+        CACHE.with(|cache| {
+            let mut cache = cache.borrow_mut();
+            let reg = cache
+                .entry(re.to_owned())
+                .or_insert(Regex::new(re).unwrap());
+            reg.captures(text)
+        })
+    } else {
+        Regex::new(re).unwrap().captures(text)
+    };
+    if let Some(caps) = caps {
+        let mut ret = ManuallyDrop::new(Vec::with_capacity(caps.len()));
+        for (idx, mat) in caps.iter().enumerate() {
+            if let Some(mat) = mat {
+                let mat = Match {
+                    start: mat.start() as i64,
+                    end: mat.end() as i64,
+                    string: CString::new(mat.as_str()).unwrap().into_raw(),
+                };
+                ret.push(MatchIdx {
+                    mat,
+                    idx: idx as i64,
+                });
+            }
+        }
+        *list = ret.as_ptr() as *mut _;
+        ret.len()
+    } else {
+        0
+    }
+}
