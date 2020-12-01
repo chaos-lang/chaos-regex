@@ -1,14 +1,14 @@
 {
-    "name": "template",
-    "version": "1.1.0",
-    "description": "Template for Chaos C extension developers.",
-    "tags": ["official", "template"],
+    "name": "regex",
+    "version": "0.1.0",
+    "description": "Regex library for chaos",
+    "tags": ["official", "regex"],
     "type": "extension",
     "license": "MIT",
     "authors": [
         {
-            "name": "M. Mert Yildiran",
-            "email": "me@mertyildiran.com",
+            "name": "Ben Aaron Goldberg",
+            "email": "ben@benaaron.dev",
             "role": "Maintainer"
         }
     ]
