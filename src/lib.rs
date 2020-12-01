@@ -243,12 +243,17 @@ pub unsafe extern "C" fn find_all(
 
 #[no_mangle]
 pub unsafe extern "C" fn free_match_prt(ptr: *mut Match) {
-    mem::drop(Box::from_raw(ptr))
+    let mat = Box::from_raw(ptr);
+    mem::drop(CString::from_raw(mat.string));
+    mem::drop(mat)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn free_match_list(ptr: *mut Match, len: usize) {
-    mem::drop(Vec::from_raw_parts(ptr, len, len));
+    let list = Vec::from_raw_parts(ptr, len, len);
+    for mat in list {
+        mem::drop(CString::from_raw(mat.string));
+    }
 }
 
 #[repr(C)]

@@ -2,6 +2,7 @@
 #include "bindings.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void throw_err() {
   int err_len = last_error_length();
@@ -21,6 +22,8 @@ int KAOS_EXPORT Kaos_is_match() {
   char *re = kaos.getVariableString(is_match_params_name[0]);
   char *text = kaos.getVariableString(is_match_params_name[1]);
   bool ret = is_match(re, text, is_match_opt_params[0].b);
+  free(re);
+  free(text);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -40,6 +43,9 @@ int KAOS_EXPORT Kaos_replace() {
   char *text = kaos.getVariableString(replace_params_name[1]);
   char *rep = kaos.getVariableString(replace_params_name[2]);
   char *ret = replace(re, text, rep, replace_opt_params[0].b);
+  free(re);
+  free(text);
+  free(rep);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -60,6 +66,9 @@ int KAOS_EXPORT Kaos_replace_all() {
   char *text = kaos.getVariableString(replace_all_params_name[1]);
   char *rep = kaos.getVariableString(replace_all_params_name[2]);
   char *ret = replace_all(re, text, rep, replace_all_opt_params[0].b);
+  free(re);
+  free(text);
+  free(rep);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -82,6 +91,9 @@ int KAOS_EXPORT Kaos_replacen() {
   long long limit = kaos.getVariableInt(replacen_params_name[2]);
   char *rep = kaos.getVariableString(replacen_params_name[3]);
   char *ret = replacen(re, text, limit, rep, replacen_opt_params[0].b);
+  free(re);
+  free(text);
+  free(rep);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -102,6 +114,8 @@ int KAOS_EXPORT Kaos_split() {
   char *text = kaos.getVariableString(split_params_name[1]);
   char **ret = NULL;
   uintptr_t len = split(re, text, split_opt_params[0].b, &ret);
+  free(re);
+  free(text);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -127,6 +141,8 @@ int KAOS_EXPORT Kaos_splitn() {
   long long limit = kaos.getVariableInt(splitn_params_name[2]);
   char **ret = NULL;
   uintptr_t len = splitn(re, text, limit, splitn_opt_params[0].b, &ret);
+  free(re);
+  free(text);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -150,6 +166,8 @@ int KAOS_EXPORT Kaos_find() {
   char *re = kaos.getVariableString(find_params_name[0]);
   char *text = kaos.getVariableString(find_params_name[1]);
   Match *ret = find(re, text, find_opt_params[0].b);
+  free(re);
+  free(text);
   if (have_last_error()) {
     throw_err();
     return 1;
@@ -178,6 +196,8 @@ int KAOS_EXPORT Kaos_find_all() {
   char *text = kaos.getVariableString(find_all_params_name[1]);
   Match *ret = NULL;
   uintptr_t len = find_all(re, text, find_all_opt_params[0].b, &ret);
+  free(re);
+  free(text);
   if (have_last_error()) {
     throw_err();
     return 1;
