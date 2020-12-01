@@ -1,1 +1,8 @@
-Hello from the template!
+true
+Yoxoxox
+YoYoYoY
+YoYoYox
+['hello', 'my', 'name', 'is', 'Steve']
+['hello', 'my', 'name is Steve']
+[{'start': 2, 'end': 15, 'string': 'categorically'}]
+[{'start': 0, 'end': 13, 'string': 'Retroactively'}, {'start': 14, 'end': 27, 'string': 'relinquishing'}, {'start': 28, 'end': 41, 'string': 'remunerations'}, {'start': 45, 'end': 58, 'string': 'reprehensible'}]
