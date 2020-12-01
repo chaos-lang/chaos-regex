@@ -23,10 +23,10 @@ else
 	${MAKE} build-linux
 endif
 
-build-linux: libchaos_regex.a
+build-linux:
 	${CHAOS_COMPILER} -shared -fPIC -pthread ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.so
 
-build-macos: libchaos_regex.a
+build-macos:
 	${CHAOS_COMPILER} -shared -fPIC -pthread -undefined dynamic_lookup ${SPELL_NAME}.c libchaos_regex.a -o ${SPELL_NAME}.dylib
 
 spell:
